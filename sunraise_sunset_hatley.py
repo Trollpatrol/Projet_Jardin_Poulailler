@@ -16,7 +16,5 @@ def sunraise_sunset_hatley():
       # Get today's sunrise and sunset in UTC
       today_sr = sun.get_sunrise_time()
       today_ss = sun.get_sunset_time()
-      print('Today at Hatley the sun raised at {} and get down at {}'.
-            format(today_sr.strftime('%H:%M'), today_ss.strftime('%H:%M')))
 
       return today_sr, today_ss
