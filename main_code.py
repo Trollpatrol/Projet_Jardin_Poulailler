@@ -1,8 +1,8 @@
 import time
+import RPi.GPIO as GPIO
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
-import RPi.GPIO as GPIO
 from gpiozero import Motor
 from sunraise_sunset_hatley import sunraise_sunset_hatley
 import threading
@@ -16,8 +16,8 @@ GPIO.setwarnings(False)
 #set GPIO inputs
 LS001 = 17
 LS002 = 18
-PB001 = 22
-PB002 = 23
+PB001 = 11
+PB002 = 8
 GTT001 = 4 #temp on irrigation board
 GHT002 = 9
 FLOAT001 = 7
@@ -37,8 +37,8 @@ GPIO.setup(WFT001, GPIO.IN)
 
 #set GPIO outputs
 WPU001 = 25
-MU001_forward = 11
-MU001_backward = 8
+MU001_forward = 22
+MU001_backward = 23
 WVS001 = 13 #S1 on irrigation board
 WVS002 = 16 #S2 on irrigation board
 WVS003 = 19 #S3 on irrigation board
@@ -50,7 +50,7 @@ GPIO.setup(WVS002, GPIO.OUT)
 GPIO.setup(WVS003, GPIO.OUT)
 
 #set coop door motor
-door_motor = Motor(MU001_forward, MU001_backward)
+door_motor = Motor(forward=MU001_forward, backward=MU001_backward)
 
 #set alarm levels
 max_time_door = 10
@@ -81,15 +81,17 @@ def get_date_times():
 @anvil.server.callable
 def open_coop_door():
     global door_status
+    door_motor.forward()
     for i in range(0,max_time_door,1):
         i += 1
         time.sleep(1)
         print(i)
         if GPIO.input(LS001):
-            door_motor.forward()
+            door_motor.stop()
             door_status = 'Ouverte'
             return
         if i == max_time_door:
+            door_motor.stop()
             door_status = 'Alarme LS001'
         else:
             pass
@@ -97,15 +99,17 @@ def open_coop_door():
 @anvil.server.callable
 def close_coop_door():
     global door_status
+    door_motor.backward()
     for i in range(0,max_time_door,1):
         i += 1
         print(i)
         time.sleep(1)
         if GPIO.input(LS002):
-            door_motor.forward()
+            door_motor.stop()
             door_status = 'Fermée'
             return
         if i == max_time_door:
+            door_motor.stop()
             door_status = 'Alarme LS002'
         else:
             pass 
