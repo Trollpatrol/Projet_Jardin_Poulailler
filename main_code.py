@@ -6,6 +6,13 @@ from datetime import timedelta
 from gpiozero import Motor
 from sunraise_sunset_hatley import sunraise_sunset_hatley
 import threading
+#for GTT001 and GTT002
+from w1thermsensor import W1ThermSensor
+#for GHT001
+import board
+import busio
+from adafruit_htu21d import HTU21D
+#for Anvil server
 import anvil.server
 anvil.server.connect('TQ6PCXQLJY54QWZGKZQHC3GM-O2TT5S2TVWUJ6HFQ')
 
@@ -18,7 +25,6 @@ LS001 = 17
 LS002 = 18
 PB001 = 11
 PB002 = 8
-GTT001 = 4 #temp on irrigation board
 GHT002 = 9
 FLOAT001 = 7
 FLOAT002 = 6
@@ -28,7 +34,6 @@ GPIO.setup(LS001, GPIO.IN)
 GPIO.setup(LS002, GPIO.IN)
 GPIO.setup(PB001, GPIO.IN)
 GPIO.setup(PB002, GPIO.IN)
-GPIO.setup(GTT001, GPIO.IN)
 GPIO.setup(GHT002, GPIO.IN)
 GPIO.setup(FLOAT001, GPIO.IN)
 GPIO.setup(FLOAT002, GPIO.IN)
@@ -51,6 +56,13 @@ GPIO.setup(WVS003, GPIO.OUT)
 
 #set coop door motor
 door_motor = Motor(forward=MU001_forward, backward=MU001_backward)
+
+#set GTT001
+GTT001 = W1ThermSensor()
+
+#set GHT001
+i2c = busio.I2C(board.SCL, board.SDA)
+GHT001 = HTU21D(i2c)
 
 #set alarm levels
 max_time_door = 10
@@ -142,4 +154,18 @@ def kill_coop_auto():
 def check_door_status():
     return door_status
 
+@anvil.server.callable
+def get_soil_temp():
+    global soil_temp
+    soil_temp = GTT001.get_temperature()
+    return soil_temp
+
+@anvil.server.callable
+def get_coop_temp_hum():
+    global coop_temp
+    global coop_hum
+    coop_temp = GHT001.temperature
+    coop_hum = GHT001.relative_humidity
+    return coop_temp, coop_hum
+    
 anvil.server.wait_forever()
